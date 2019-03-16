@@ -1,0 +1,114 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class DodgeMain : PhysicsObject {
+
+    public float dodgeSpeed; 
+    public Slider energy;
+    public float energyAmount;
+    public float dodgeTime;
+    Animator sword;
+    public bool kill = false;
+    int state;
+
+
+    private void Start()
+    {
+        sword = GetComponent<Animator>();
+        StartCoroutine(energyRecover());        
+
+    }
+
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "SDEnemy" && kill)
+        {
+            Debug.Log("BAM!");
+            collision.gameObject.GetComponent<ShowDown>().Die();
+        }
+    }
+    void SwordSwing()
+    {
+        sword.SetTrigger("Swing");
+    }
+
+    IEnumerator dashRight(float addedSpeed)
+    {
+        
+        targetVelocity = Vector2.right * (dodgeSpeed+addedSpeed);
+        if(state == 1)
+        { kill = true; }
+        yield return new WaitForSeconds(dodgeTime);
+        if(state == 1)
+        { kill = false; }
+        targetVelocity = Vector2.zero;
+
+    }
+    IEnumerator dashLeft(float addedSpeed)
+    {
+        targetVelocity = Vector2.left * (dodgeSpeed+addedSpeed);
+        yield return new WaitForSeconds(dodgeTime);
+        targetVelocity = Vector2.zero;       
+    }
+
+    IEnumerator energyRecover()
+    {
+        while (true)
+            if (energyAmount < 100)
+            {
+                energyAmount += 25;
+                yield return new WaitForSeconds(1);
+            }
+            else
+            { yield return null; }
+    }
+    void Update()
+    {
+        energy.value = energyAmount;
+        if (Input.GetKeyDown(KeyCode.E) && Input.GetKey(KeyCode.A) && energyAmount >= 100)
+        {
+            StartCoroutine(dashLeft(0));
+            energyAmount -= 100f;
+        }
+        if (Input.GetKeyDown(KeyCode.E) && Input.GetKey(KeyCode.D) && energyAmount >= 100)
+        {
+            StartCoroutine(dashRight(0));
+            energyAmount -= 100f;
+        }
+        else if(Input.GetKeyDown(KeyCode.E) && energyAmount >= 100)
+        {
+            StartCoroutine(dashLeft(25));
+            energyAmount -= 100f;
+        }
+
+        if (Input.GetKeyDown(KeyCode.F) && state == 0)
+        {
+            SwordSwing();
+        }
+
+        if (Input.GetKeyDown(KeyCode.S) && state == 0)
+        {
+
+            sword.SetBool("Sheath", true);
+            state = 1;
+
+        }
+        else if (Input.GetKeyDown(KeyCode.S) && state == 1)
+        {
+            sword.SetBool("Sheath", false);
+            state = 0;
+        }
+        if (Input.GetKeyDown(KeyCode.F) && state == 1 && GetComponent<PlayerController>().facingRight)
+        {
+            StartCoroutine(dashRight(30));
+            sword.SetTrigger("stab");
+        }
+        if (Input.GetKeyDown(KeyCode.F) && state == 1 && !GetComponent<PlayerController>().facingRight)
+        {
+            StartCoroutine(dashLeft(30));
+            sword.SetTrigger("stab");
+        }
+    }
+}
