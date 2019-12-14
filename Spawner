@@ -1,0 +1,23 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Spawner : MonoBehaviour
+{
+    public GameObject[] enemyList;
+    public int enemySelected;
+
+    void Start()
+    {
+            RandomSpawn();
+    }
+
+    void RandomSpawn()
+    {
+        enemySelected = Random.Range(0, enemyList.Length);
+
+        Debug.Log("Spawning an Enemy");
+        GameObject randomEnemy = Instantiate(enemyList[enemySelected], transform.position, Quaternion.identity, transform);
+    }
+
+}
