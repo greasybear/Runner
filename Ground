@@ -1,0 +1,76 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class GroundRunner : MonoBehaviour
+{
+    public static float runningFloat = .25f;
+    public float dash;
+    public float dodgeTime;
+    public float originalSpeed;
+    public bool spawnNewBlock = false;
+    public GameObject newBlock;
+    public float enduranceLevel = 100f;
+    public Slider enduranceSlider;
+    public float recoveryTime = .5f;
+    GameObject Player;
+
+    private void Start()
+    {
+        Player = GameObject.FindGameObjectWithTag("Player");
+        spawnNewBlock = false;
+        newBlock = this.gameObject;
+        StartCoroutine(Endurance());
+    }
+    private void Update()
+    {
+        enduranceSlider.value = enduranceLevel;
+        transform.Translate(Vector3.right * (-1 * runningFloat));
+
+        if (Input.GetKeyDown(KeyCode.F) && enduranceLevel >= 100f && Player != null)
+        {
+            StartCoroutine(Lunge(dash));
+            enduranceLevel -= 100f;
+        }
+
+        if(spawnNewBlock)
+        {
+           GameObject clone = Instantiate(newBlock, new Vector3(transform.position.x + 215, transform.position.y), Quaternion.identity);
+            spawnNewBlock = false;
+        }
+    }
+
+    IEnumerator Lunge(float addedSpeed)
+    {
+        if (Player != null)
+        {
+            runningFloat = addedSpeed;
+            Player.GetComponent<Rigidbody>().useGravity = false;
+            yield return new WaitForSeconds(dodgeTime);
+            if (Player != null)
+            {
+                Player.GetComponent<Rigidbody>().useGravity = true;
+                runningFloat = originalSpeed;
+            }
+        }
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        if(other.tag == "Player")
+        {
+            spawnNewBlock = true;
+        }
+    }
+    IEnumerator Endurance()
+    {
+        while (true)
+            if (enduranceLevel < 100)
+            {
+                enduranceLevel += 25;
+                yield return new WaitForSeconds(recoveryTime);
+            }
+            else
+            { yield return null; }
+    }
+}
